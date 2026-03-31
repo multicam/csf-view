@@ -1,7 +1,22 @@
-import { join } from 'node:path'
-import { mkdir } from 'node:fs/promises'
+import { join, dirname } from 'node:path'
+import { mkdir, readdir, rename } from 'node:fs/promises'
 
 type SSEClient = WritableStreamDefaultWriter<Uint8Array>
+
+const APP_DIR = dirname(new URL(import.meta.url).pathname)
+const DIST_DIR = join(APP_DIR, 'dist')
+
+const MIME_TYPES: Record<string, string> = {
+  '.html': 'text/html',
+  '.js': 'application/javascript',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+}
 
 interface ServerOptions {
   port?: number
@@ -100,6 +115,50 @@ export function startServer(opts: ServerOptions = {}) {
         })
       }
 
+      if (req.method === 'GET' && url.pathname === '/api/list') {
+        await mkdir(viewsDir, { recursive: true })
+        const files = await readdir(viewsDir)
+        const views = files
+          .filter((f) => f.endsWith('.json'))
+          .map((f) => f.replace(/\.json$/, ''))
+          .sort()
+        return Response.json(views, { headers: corsHeaders })
+      }
+
+      if (req.method === 'POST' && url.pathname === '/api/rename') {
+        let body: { from?: string; to?: string }
+        try {
+          body = await req.json()
+        } catch {
+          return new Response('Invalid JSON', { status: 400, headers: corsHeaders })
+        }
+        if (!body.from || !body.to) {
+          return new Response('Missing from or to', { status: 400, headers: corsHeaders })
+        }
+
+        const fromFile = join(viewsDir, sanitizeFilename(body.from) + '.json')
+        const toFile = join(viewsDir, sanitizeFilename(body.to) + '.json')
+
+        if (!(await Bun.file(fromFile).exists())) {
+          return new Response('Source not found', { status: 404, headers: corsHeaders })
+        }
+
+        // Read, update the name field inside, write to new path
+        const data = await Bun.file(fromFile).json()
+        data.name = body.to
+        data.savedAt = new Date().toISOString()
+        await Bun.write(toFile, JSON.stringify(data, null, 2))
+
+        // Remove old file if name actually changed
+        if (fromFile !== toFile) {
+          await Bun.file(fromFile).exists() && await rename(fromFile, fromFile + '.bak')
+        }
+
+        await pushSSE({ name: body.to, renamed: true, from: body.from })
+
+        return Response.json({ ok: true, name: body.to }, { headers: corsHeaders })
+      }
+
       if (url.pathname === '/events') {
         const stream = new TransformStream<Uint8Array, Uint8Array>()
         const writer = stream.writable.getWriter()
@@ -124,7 +183,25 @@ export function startServer(opts: ServerOptions = {}) {
         })
       }
 
-      return new Response('Not found', { status: 404, headers: corsHeaders })
+      // Serve built frontend from dist/
+      const filePath = join(DIST_DIR, url.pathname === '/' ? 'index.html' : url.pathname)
+      const file = Bun.file(filePath)
+      if (await file.exists()) {
+        const ext = filePath.substring(filePath.lastIndexOf('.'))
+        return new Response(file, {
+          headers: { 'Content-Type': MIME_TYPES[ext] ?? 'application/octet-stream', ...corsHeaders },
+        })
+      }
+
+      // SPA fallback — serve index.html for unmatched routes
+      const indexFile = Bun.file(join(DIST_DIR, 'index.html'))
+      if (await indexFile.exists()) {
+        return new Response(indexFile, {
+          headers: { 'Content-Type': 'text/html', ...corsHeaders },
+        })
+      }
+
+      return new Response('Not found — run "bun run build" to generate the frontend', { status: 404, headers: corsHeaders })
     },
   })
 

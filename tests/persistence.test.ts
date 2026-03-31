@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
+import { viewFilename, parseViewFilename } from '../src/lib/persistence'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -95,5 +96,58 @@ describe('round-trip persistence', () => {
       k.startsWith('shape:')
     )
     expect(shapeKeys.length).toBe(0)
+  })
+})
+
+describe('versioning helpers', () => {
+  it('viewFilename: null/0 version returns bare name', () => {
+    expect(viewFilename('my-idea', null)).toBe('my-idea')
+    expect(viewFilename('my-idea', 0)).toBe('my-idea')
+  })
+
+  it('viewFilename: positive version appends -v{n}', () => {
+    expect(viewFilename('my-idea', 1)).toBe('my-idea-v1')
+    expect(viewFilename('my-idea', 5)).toBe('my-idea-v5')
+  })
+
+  it('parseViewFilename: bare name returns null version', () => {
+    expect(parseViewFilename('my-idea')).toEqual({ name: 'my-idea', version: null })
+  })
+
+  it('parseViewFilename: versioned name extracts version', () => {
+    expect(parseViewFilename('my-idea-v1')).toEqual({ name: 'my-idea', version: 1 })
+    expect(parseViewFilename('my-idea-v12')).toEqual({ name: 'my-idea', version: 12 })
+  })
+
+  it('parseViewFilename: name with hyphens preserves them', () => {
+    expect(parseViewFilename('login-flow-v3')).toEqual({ name: 'login-flow', version: 3 })
+  })
+})
+
+describe('versioning round-trip', () => {
+  it('version+ creates new file, previous version stays', async () => {
+    await save('ver-test', wireframe)
+    await save('ver-test-v1', wireframe) // simulate version+
+
+    const v0 = await load('ver-test')
+    const v1 = await load('ver-test-v1')
+
+    expect(v0).not.toBeNull()
+    expect(v1).not.toBeNull()
+  })
+
+  it('rename creates new file with reset version', async () => {
+    await save('old-ver-v3', wireframe)
+
+    const renameRes = await fetch(`${base}/api/rename`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: 'old-ver-v3', to: 'fresh-start' }),
+    })
+    expect(renameRes.status).toBe(200)
+
+    const data = await load('fresh-start')
+    expect(data).not.toBeNull()
+    expect(data.name).toBe('fresh-start')
   })
 })

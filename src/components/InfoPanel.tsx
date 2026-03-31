@@ -1,39 +1,40 @@
-import { useEffect, useState } from 'react'
-
-interface ViewInfo {
-  viewsDir: string
-  uptime: number
-}
+import { useState, useCallback, useRef, useEffect } from 'react'
+import { useView } from '../App'
 
 export function InfoPanel() {
-  const [info, setInfo] = useState<ViewInfo | null>(null)
-  const [lastSaved, setLastSaved] = useState<string | null>(null)
+  const { state, filename, renameTo } = useView()
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(state.name)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [project, setProject] = useState('...')
 
-  // Fetch server health for project context
   useEffect(() => {
     fetch('/health')
       .then((r) => r.json())
-      .then(setInfo)
+      .then((info) => {
+        const p = info.viewsDir?.replace(/\/thoughts\/shared\/views$/, '').split('/').pop()
+        if (p) setProject(p)
+      })
       .catch(() => {})
   }, [])
 
-  // Listen for save events to show last saved time
   useEffect(() => {
-    const sse = new EventSource('/events')
-    sse.onmessage = (e) => {
-      try {
-        const data = JSON.parse(e.data)
-        if (data.savedAt) {
-          setLastSaved(new Date(data.savedAt).toLocaleTimeString())
-        }
-      } catch {}
-    }
-    return () => sse.close()
-  }, [])
+    setDraft(state.name)
+  }, [state.name])
 
-  const project = info?.viewsDir
-    ? info.viewsDir.replace(/\/thoughts\/shared\/views$/, '').split('/').pop()
-    : '...'
+  useEffect(() => {
+    if (editing) inputRef.current?.select()
+  }, [editing])
+
+  const commitRename = useCallback(async () => {
+    setEditing(false)
+    const trimmed = draft.trim()
+    if (!trimmed || trimmed === state.name) {
+      setDraft(state.name)
+      return
+    }
+    await renameTo(trimmed).catch(() => setDraft(state.name))
+  }, [draft, state.name, renameTo])
 
   return (
     <div
@@ -49,9 +50,42 @@ export function InfoPanel() {
       }}
     >
       <span style={{ fontWeight: 600 }}>{project}</span>
-      <span style={{ color: '#9A9288' }}>current</span>
-      {lastSaved && (
-        <span style={{ color: '#9A9288', fontSize: 11 }}>saved {lastSaved}</span>
+      <span style={{ color: '#9A9288' }}>/</span>
+      {editing ? (
+        <input
+          ref={inputRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commitRename}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commitRename()
+            if (e.key === 'Escape') { setDraft(state.name); setEditing(false) }
+          }}
+          style={{
+            fontSize: 12,
+            fontFamily: 'var(--font-body)',
+            border: '1px solid #DED4C6',
+            borderRadius: 4,
+            padding: '2px 6px',
+            outline: 'none',
+            color: '#4A443D',
+            background: '#FAF9F7',
+            width: Math.max(60, draft.length * 7),
+          }}
+        />
+      ) : (
+        <span
+          onClick={() => setEditing(true)}
+          style={{ cursor: 'text', borderBottom: '1px dashed #DED4C6' }}
+          title="Click to rename"
+        >
+          {filename}
+        </span>
+      )}
+      {state.lastSaved && (
+        <span style={{ color: '#9A9288', fontSize: 11 }}>
+          saved {new Date(state.lastSaved).toLocaleTimeString()}
+        </span>
       )}
     </div>
   )

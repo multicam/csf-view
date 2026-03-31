@@ -245,6 +245,96 @@ describe('GET /events (SSE)', () => {
   })
 })
 
+describe('GET /api/list', () => {
+  it('returns saved view names', async () => {
+    await fetch(`${base}/api/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'list-a', document: empty }),
+    })
+    await fetch(`${base}/api/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'list-b', document: empty }),
+    })
+
+    const res = await fetch(`${base}/api/list`)
+    expect(res.status).toBe(200)
+    const views: string[] = await res.json()
+    expect(views).toContain('list-a')
+    expect(views).toContain('list-b')
+  })
+})
+
+describe('POST /api/rename', () => {
+  it('renames a view file and updates the name field inside', async () => {
+    await fetch(`${base}/api/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'old-name', document: wireframe }),
+    })
+
+    const res = await fetch(`${base}/api/rename`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: 'old-name', to: 'new-name' }),
+    })
+    expect(res.status).toBe(200)
+
+    // New file exists with updated name field
+    const loaded = await (await fetch(`${base}/api/load?name=new-name`)).json()
+    expect(loaded.name).toBe('new-name')
+    expect(loaded.document).toBeDefined()
+  })
+
+  it('returns 404 for nonexistent source', async () => {
+    const res = await fetch(`${base}/api/rename`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: 'ghost', to: 'whatever' }),
+    })
+    expect(res.status).toBe(404)
+  })
+
+  it('pushes SSE event on rename', async () => {
+    await fetch(`${base}/api/save`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'rename-sse', document: empty }),
+    })
+
+    const events: string[] = []
+    const controller = new AbortController()
+    const sseRes = await fetch(`${base}/events`, { signal: controller.signal })
+    const reader = sseRes.body!.getReader()
+    const decoder = new TextDecoder()
+    const reading = (async () => {
+      try {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          events.push(decoder.decode(value))
+        }
+      } catch {}
+    })()
+
+    await Bun.sleep(50)
+
+    await fetch(`${base}/api/rename`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: 'rename-sse', to: 'renamed-sse' }),
+    })
+
+    await Bun.sleep(50)
+    controller.abort()
+    await reading
+
+    const combined = events.join('')
+    expect(combined).toContain('renamed-sse')
+  })
+})
+
 describe('CORS', () => {
   it('includes Access-Control-Allow-Origin header', async () => {
     const res = await fetch(`${base}/health`)

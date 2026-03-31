@@ -18,11 +18,20 @@
       :root {
         /* Qara aesthetic — tldraw UI chrome */
         --font-body: 'Instrument Sans', system-ui, sans-serif;
-        /* Qara aesthetic — tldraw canvas shape fonts */
+      }
+      /* Override tldraw's font vars on its own container selector */
+      .tl-container {
         --tl-font-draw: 'Instrument Sans', system-ui, sans-serif;
         --tl-font-sans: 'Instrument Sans', system-ui, sans-serif;
         --tl-font-serif: 'Instrument Serif', Georgia, serif;
         --tl-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+      }
+      .tlui-button,
+      .tlui-page-menu__name,
+      .tlui-page-menu__header__title,
+      .tlui-page-menu__item__submenu {
+        font-family: var(--font-body) !important;
+        font-weight: 600 !important;
       }
     </style>
   </head>

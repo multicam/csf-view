@@ -6,6 +6,8 @@
     "dev": "bun run server.ts & bunx vite dev",
     "dev:api": "bun run server.ts",
     "dev:ui": "bunx vite dev",
+    "build": "bunx vite build",
+    "start": "bun run server.ts",
     "test": "bun test"
   },
   "devDependencies": {

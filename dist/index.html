@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>csf-view</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <style>
       html, body, #root {
         margin: 0;
@@ -12,8 +15,26 @@
         height: 100%;
         overflow: hidden;
       }
+      :root {
+        /* Qara aesthetic — tldraw UI chrome */
+        --font-body: 'Instrument Sans', system-ui, sans-serif;
+      }
+      /* Override tldraw's font vars on its own container selector */
+      .tl-container {
+        --tl-font-draw: 'Instrument Sans', system-ui, sans-serif;
+        --tl-font-sans: 'Instrument Sans', system-ui, sans-serif;
+        --tl-font-serif: 'Instrument Serif', Georgia, serif;
+        --tl-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+      }
+      .tlui-button,
+      .tlui-page-menu__name,
+      .tlui-page-menu__header__title,
+      .tlui-page-menu__item__submenu {
+        font-family: var(--font-body) !important;
+        font-weight: 600 !important;
+      }
     </style>
-    <script type="module" crossorigin src="/assets/index-lZvRINNB.js"></script>
+    <script type="module" crossorigin src="/assets/index-hZ8ddyOm.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-BITxfmBU.css">
   </head>
   <body>

@@ -16,3 +16,32 @@ export async function loadView(name: string): Promise<{ name: string; savedAt: s
   if (!res.ok) throw new Error(`Load failed: ${res.status}`)
   return res.json()
 }
+
+export async function renameView(from: string, to: string): Promise<{ name: string }> {
+  const res = await fetch(`${API_BASE}/rename`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from, to }),
+  })
+  if (!res.ok) throw new Error(`Rename failed: ${res.status}`)
+  return res.json()
+}
+
+export async function listViews(): Promise<string[]> {
+  const res = await fetch(`${API_BASE}/list`)
+  if (!res.ok) throw new Error(`List failed: ${res.status}`)
+  return res.json()
+}
+
+/** Compute the filename for a given name + version */
+export function viewFilename(name: string, version: number | null): string {
+  if (version === null || version === 0) return name
+  return `${name}-v${version}`
+}
+
+/** Parse a filename into name + version */
+export function parseViewFilename(filename: string): { name: string; version: number | null } {
+  const match = filename.match(/^(.+)-v(\d+)$/)
+  if (match) return { name: match[1]!, version: parseInt(match[2]!, 10) }
+  return { name: filename, version: null }
+}
