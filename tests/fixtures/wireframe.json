@@ -1,0 +1,123 @@
+{
+  "store": {
+    "page:page1": {
+      "id": "page:page1",
+      "name": "Page 1",
+      "typeName": "page",
+      "index": "a1",
+      "meta": {}
+    },
+    "shape:frame1": {
+      "id": "shape:frame1",
+      "type": "frame",
+      "x": 100,
+      "y": 50,
+      "rotation": 0,
+      "index": "a1",
+      "parentId": "page:page1",
+      "isLocked": false,
+      "opacity": 1,
+      "props": {
+        "w": 400,
+        "h": 600,
+        "name": "Dashboard"
+      },
+      "typeName": "shape",
+      "meta": {}
+    },
+    "shape:header": {
+      "id": "shape:header",
+      "type": "geo",
+      "x": 120,
+      "y": 70,
+      "rotation": 0,
+      "index": "a2",
+      "parentId": "shape:frame1",
+      "isLocked": false,
+      "opacity": 1,
+      "props": {
+        "geo": "rectangle",
+        "w": 360,
+        "h": 60,
+        "color": "blue",
+        "fill": "solid",
+        "dash": "draw",
+        "size": "m",
+        "text": "Header / Nav",
+        "font": "draw"
+      },
+      "typeName": "shape",
+      "meta": {}
+    },
+    "shape:content": {
+      "id": "shape:content",
+      "type": "geo",
+      "x": 120,
+      "y": 150,
+      "rotation": 0,
+      "index": "a3",
+      "parentId": "shape:frame1",
+      "isLocked": false,
+      "opacity": 1,
+      "props": {
+        "geo": "rectangle",
+        "w": 360,
+        "h": 380,
+        "color": "black",
+        "fill": "none",
+        "dash": "draw",
+        "size": "m",
+        "text": "Main Content Area",
+        "font": "draw"
+      },
+      "typeName": "shape",
+      "meta": {}
+    },
+    "shape:sidebar": {
+      "id": "shape:sidebar",
+      "type": "geo",
+      "x": 520,
+      "y": 70,
+      "rotation": 0,
+      "index": "a4",
+      "parentId": "page:page1",
+      "isLocked": false,
+      "opacity": 1,
+      "props": {
+        "geo": "rectangle",
+        "w": 180,
+        "h": 580,
+        "color": "grey",
+        "fill": "semi",
+        "dash": "draw",
+        "size": "m",
+        "text": "Sidebar",
+        "font": "draw"
+      },
+      "typeName": "shape",
+      "meta": {}
+    },
+    "shape:note1": {
+      "id": "shape:note1",
+      "type": "note",
+      "x": 750,
+      "y": 100,
+      "rotation": 0,
+      "index": "a5",
+      "parentId": "page:page1",
+      "isLocked": false,
+      "opacity": 1,
+      "props": {
+        "color": "yellow",
+        "size": "m",
+        "text": "Responsive: collapses sidebar on mobile",
+        "font": "draw"
+      },
+      "typeName": "shape",
+      "meta": {}
+    }
+  },
+  "schema": {
+    "schemaVersion": 2
+  }
+}
