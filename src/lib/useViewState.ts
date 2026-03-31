@@ -36,11 +36,12 @@ export function useViewState(initial: { name: string; version: number | null }) 
   }, [])
 
   const renameTo = useCallback(async (newName: string) => {
-    const oldFilename = viewFilename(state.name, state.version)
-    const newFilename = newName // reset version on rename
-    await renameView(oldFilename, newFilename)
+    if (state.lastSaved) {
+      const oldFilename = viewFilename(state.name, state.version)
+      await renameView(oldFilename, newName)
+    }
     setState({ name: newName, version: null, lastSaved: null })
-  }, [state.name, state.version])
+  }, [state.name, state.version, state.lastSaved])
 
   return { state, filename, markSaved, bumpVersion, renameTo }
 }

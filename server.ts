@@ -26,7 +26,7 @@ interface ServerOptions {
 const startTime = Date.now()
 
 export function startServer(opts: ServerOptions = {}) {
-  const port = opts.port ?? Number(process.env.PORT) ?? 7201
+  const port = opts.port ?? (Number(process.env.PORT) || 7201)
   const viewsDir = opts.viewsDir ?? process.env.VIEWS_DIR ?? './thoughts/shared/views'
   const clients = new Set<SSEClient>()
 
@@ -206,6 +206,7 @@ export function startServer(opts: ServerOptions = {}) {
   })
 
   return {
+    port: server.port,
     stop: () => {
       for (const client of clients) {
         client.close().catch(() => {})
@@ -219,6 +220,6 @@ export function startServer(opts: ServerOptions = {}) {
 // Run as standalone if executed directly
 if (import.meta.main) {
   const s = startServer()
-  console.log(`csf-view API server running on :${process.env.PORT ?? 7201}`)
+  console.log(`csf-view API server running on :${s.port}`)
   console.log(`Views dir: ${process.env.VIEWS_DIR ?? './thoughts/shared/views'}`)
 }
