@@ -1,4 +1,4 @@
-import { join, dirname } from 'node:path'
+import { join, dirname, resolve } from 'node:path'
 import { mkdir, readdir, rename } from 'node:fs/promises'
 
 type SSEClient = WritableStreamDefaultWriter<Uint8Array>
@@ -27,8 +27,11 @@ const startTime = Date.now()
 
 export function startServer(opts: ServerOptions = {}) {
   const port = opts.port ?? (Number(process.env.PORT) || 7201)
-  const viewsDir = opts.viewsDir ?? process.env.VIEWS_DIR ?? './thoughts/shared/views'
+  const viewsDir = resolve(opts.viewsDir ?? process.env.VIEWS_DIR ?? 'thoughts/shared/views')
   const clients = new Set<SSEClient>()
+
+  // Ensure the views dir exists at launch so users see a valid path immediately
+  mkdir(viewsDir, { recursive: true }).catch(() => {})
 
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -95,6 +98,22 @@ export function startServer(opts: ServerOptions = {}) {
         await pushSSE({ name: body.name, savedAt })
 
         return Response.json({ ok: true, savedAt }, { headers: corsHeaders })
+      }
+
+      if (req.method === 'POST' && url.pathname === '/api/screenshot') {
+        const name = req.headers.get('X-View-Name')
+        if (!name) {
+          return new Response('Missing X-View-Name header', { status: 400, headers: corsHeaders })
+        }
+        const blob = await req.blob()
+        if (blob.size === 0) {
+          return new Response('Empty body', { status: 400, headers: corsHeaders })
+        }
+        const filename = sanitizeFilename(name) + '.png'
+        const filepath = join(viewsDir, filename)
+        await mkdir(viewsDir, { recursive: true })
+        await Bun.write(filepath, blob)
+        return Response.json({ ok: true, filename }, { headers: corsHeaders })
       }
 
       if (req.method === 'GET' && url.pathname === '/api/load') {
@@ -207,6 +226,7 @@ export function startServer(opts: ServerOptions = {}) {
 
   return {
     port: server.port,
+    viewsDir,
     stop: () => {
       for (const client of clients) {
         client.close().catch(() => {})
@@ -221,5 +241,6 @@ export function startServer(opts: ServerOptions = {}) {
 if (import.meta.main) {
   const s = startServer()
   console.log(`csf-view API server running on :${s.port}`)
-  console.log(`Views dir: ${process.env.VIEWS_DIR ?? './thoughts/shared/views'}`)
+  console.log(`Frontend: http://localhost:${s.port}/`)
+  console.log(`Views dir: ${s.viewsDir}`)
 }

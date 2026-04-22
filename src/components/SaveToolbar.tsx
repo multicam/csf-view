@@ -1,12 +1,23 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getSnapshot, useEditor } from 'tldraw'
-import { saveView, viewFilename } from '../lib/persistence'
+import { saveView, saveScreenshot, viewFilename } from '../lib/persistence'
 import { useView } from '../App'
 
 export function SaveToolbar() {
   const editor = useEditor()
   const { state, filename, markSaved, bumpVersion } = useView()
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+
+  const captureScreenshot = useCallback(async (name: string) => {
+    try {
+      const allShapeIds = [...editor.getCurrentPageShapeIds()]
+      if (allShapeIds.length === 0) return
+      const { blob } = await editor.toImage(allShapeIds, { format: 'png', background: true })
+      await saveScreenshot(name, blob)
+    } catch (e) {
+      console.warn('Screenshot capture failed:', e)
+    }
+  }, [editor])
 
   const save = useCallback(async () => {
     setStatus('saving')
@@ -16,16 +27,16 @@ export function SaveToolbar() {
       markSaved(result.savedAt)
       setStatus('saved')
       setTimeout(() => setStatus('idle'), 1500)
+      // Fire-and-forget screenshot capture
+      captureScreenshot(filename)
     } catch {
       setStatus('error')
       setTimeout(() => setStatus('idle'), 3000)
     }
-  }, [editor, filename, markSaved])
+  }, [editor, filename, markSaved, captureScreenshot])
 
   const versionUp = useCallback(async () => {
     bumpVersion()
-    // Save will happen with the new filename on next save
-    // But let's save immediately with the new version
     setStatus('saving')
     try {
       const { document } = getSnapshot(editor.store)
@@ -34,11 +45,12 @@ export function SaveToolbar() {
       markSaved(result.savedAt)
       setStatus('saved')
       setTimeout(() => setStatus('idle'), 1500)
+      captureScreenshot(newFilename)
     } catch {
       setStatus('error')
       setTimeout(() => setStatus('idle'), 3000)
     }
-  }, [editor, state.name, state.version, bumpVersion, markSaved])
+  }, [editor, state.name, state.version, bumpVersion, markSaved, captureScreenshot])
 
   // Ctrl+S / Cmd+S handler
   useEffect(() => {

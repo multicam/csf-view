@@ -335,6 +335,49 @@ describe('POST /api/rename', () => {
   })
 })
 
+describe('POST /api/screenshot', () => {
+  it('writes PNG to VIEWS_DIR and returns 200', async () => {
+    // 1x1 red PNG (minimal valid PNG)
+    const pngBytes = new Uint8Array([
+      137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82,
+      0, 0, 0, 1, 0, 0, 0, 1, 8, 2, 0, 0, 0, 144, 119, 83, 222, 0,
+      0, 0, 12, 73, 68, 65, 84, 8, 215, 99, 248, 207, 192, 0, 0, 0,
+      3, 0, 1, 24, 216, 95, 168, 0, 0, 0, 0, 73, 69, 78, 68, 174,
+      66, 96, 130,
+    ])
+    const blob = new Blob([pngBytes], { type: 'image/png' })
+
+    const res = await fetch(`${base}/api/screenshot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'image/png', 'X-View-Name': 'screenshot-test' },
+      body: blob,
+    })
+    expect(res.status).toBe(200)
+
+    const file = Bun.file(join(viewsDir, 'screenshot-test.png'))
+    expect(await file.exists()).toBe(true)
+    expect(file.size).toBeGreaterThan(0)
+  })
+
+  it('returns 400 without X-View-Name header', async () => {
+    const res = await fetch(`${base}/api/screenshot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'image/png' },
+      body: new Blob([new Uint8Array([1, 2, 3])]),
+    })
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 with empty body', async () => {
+    const res = await fetch(`${base}/api/screenshot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'image/png', 'X-View-Name': 'empty-shot' },
+      body: new Blob([]),
+    })
+    expect(res.status).toBe(400)
+  })
+})
+
 describe('CORS', () => {
   it('includes Access-Control-Allow-Origin header', async () => {
     const res = await fetch(`${base}/health`)

@@ -39,6 +39,15 @@ export function viewFilename(name: string, version: number | null): string {
   return `${name}-v${version}`
 }
 
+export async function saveScreenshot(name: string, blob: Blob): Promise<void> {
+  const res = await fetch(`${API_BASE}/screenshot`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'image/png', 'X-View-Name': name },
+    body: blob,
+  })
+  if (!res.ok) throw new Error(`Screenshot save failed: ${res.status}`)
+}
+
 /** Parse a filename into name + version */
 export function parseViewFilename(filename: string): { name: string; version: number | null } {
   const match = filename.match(/^(.+)-v(\d+)$/)
