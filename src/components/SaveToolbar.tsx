@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getSnapshot, useEditor } from 'tldraw'
 import { saveView, saveScreenshot, viewFilename } from '../lib/persistence'
-import { useView } from '../App'
+import { useView } from '../lib/view-context'
 
 export function SaveToolbar() {
   const editor = useEditor()

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { useView } from '../App'
+import { useView } from '../lib/view-context'
 
 export function InfoPanel() {
   const { state, filename, renameTo } = useView()

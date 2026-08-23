@@ -1,31 +1,17 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Tldraw, type TLComponents, type TLEditorSnapshot } from 'tldraw'
 import 'tldraw/tldraw.css'
 import { SaveToolbar } from './components/SaveToolbar'
 import { InfoPanel } from './components/InfoPanel'
 import { loadView, parseViewFilename } from './lib/persistence'
-import { useViewState, type ViewState } from './lib/useViewState'
+import { useViewState } from './lib/useViewState'
+import { ViewContext } from './lib/view-context'
 
 function getFileFromURL(): string {
   const params = new URLSearchParams(window.location.search)
   return params.get('file') || 'current'
 }
 
-
-// Context to share view state across components
-interface ViewContextValue {
-  state: ViewState
-  filename: string
-  markSaved: (savedAt: string) => void
-  bumpVersion: () => void
-  renameTo: (name: string) => Promise<void>
-}
-
-export const ViewContext = createContext<ViewContextValue>(null!)
-
-export function useView() {
-  return useContext(ViewContext)
-}
 
 const components: TLComponents = {
   TopPanel: InfoPanel,
@@ -60,9 +46,9 @@ export default function App() {
       .finally(() => setReady(true))
   }, [])
 
-  if (!ready) return null
+  if (!ready || initialSnapshot === undefined) return null
 
-  return <AppInner initialSnapshot={initialSnapshot!} initialParsed={initialParsed} />
+  return <AppInner initialSnapshot={initialSnapshot} initialParsed={initialParsed} />
 }
 
 function AppInner({

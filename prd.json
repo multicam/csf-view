@@ -1,0 +1,40 @@
+{
+  "name": "csf-view Phase 2 — Break the Import Cycle",
+  "created_at": "2026-08-24T00:00:00.000Z",
+  "stories": [
+    {
+      "id": "S1",
+      "title": "Extract the view context into its own module",
+      "description": "src/App.tsx currently owns ViewContextValue, ViewContext, and useView, while both components import useView back from '../App'. That is a real import cycle: neither component can be understood, moved, or tested without dragging in the app root. Move the context into its own module. Separately, ViewContext is created with null! which lies to the type system — a consumer rendered outside the provider gets a property-access crash on null instead of a diagnosable error.",
+      "acceptance_criteria": [
+        "src/lib/view-context.ts exists and exports ViewContextValue, ViewContext, and useView",
+        "ViewContext is typed to admit null and is created with null as its real default value, not with a null! assertion",
+        "useView throws an Error whose message names the missing provider when the context is absent, rather than returning null",
+        "src/App.tsx no longer declares ViewContextValue, ViewContext, or useView, and imports ViewContext from src/lib/view-context.ts",
+        "'rg \"null!\" src/' returns no matches",
+        "'bunx tsc --noEmit' exits 0"
+      ],
+      "passes": true,
+      "verified_at": "2026-08-23T20:56:56.326Z",
+      "verified_by": "verifier",
+      "scenario_file": "specs/S1.md"
+    },
+    {
+      "id": "S2",
+      "title": "Repoint the components and prove the cycle is gone",
+      "description": "With the context extracted, SaveToolbar and InfoPanel must import useView from the new module rather than from the app root. The absence of the cycle is the acceptance condition, not a side effect — assert it directly.",
+      "acceptance_criteria": [
+        "src/components/SaveToolbar.tsx imports useView from '../lib/view-context'",
+        "src/components/InfoPanel.tsx imports useView from '../lib/view-context'",
+        "'rg \"from ../App\" src/' returns no matches",
+        "No module under src/ imports src/App.tsx except src/main.tsx",
+        "'bun test' reports 31 pass and 0 fail with both test files unmodified",
+        "'bun run check' exits 0"
+      ],
+      "passes": false,
+      "verified_at": null,
+      "verified_by": null,
+      "scenario_file": null
+    }
+  ]
+}
