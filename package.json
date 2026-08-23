@@ -9,9 +9,10 @@
     "build": "bunx vite build",
     "start": "bun run server.ts",
     "test": "bun test",
+    "check:architecture": "bun scripts/check-architecture.ts",
     "check:lint": "bunx biome check .",
     "check:types": "bunx tsc --noEmit",
-    "check": "bun run check:lint && bun run check:types && bun test"
+    "check": "bun run check:architecture && bun run check:lint && bun run check:types && bun test"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.10",

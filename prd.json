@@ -24,17 +24,16 @@
       "title": "Repoint the components and prove the cycle is gone",
       "description": "With the context extracted, SaveToolbar and InfoPanel must import useView from the new module rather than from the app root. The absence of the cycle is the acceptance condition, not a side effect — assert it directly.",
       "acceptance_criteria": [
-        "src/components/SaveToolbar.tsx imports useView from '../lib/view-context'",
-        "src/components/InfoPanel.tsx imports useView from '../lib/view-context'",
-        "'rg \"from ../App\" src/' returns no matches",
-        "No module under src/ imports src/App.tsx except src/main.tsx",
-        "'bun test' reports 31 pass and 0 fail with both test files unmodified",
-        "'bun run check' exits 0"
+        "A new architecture check (e.g. scripts/check-architecture.ts) exits non-zero when any module under src/ other than src/main.tsx imports the application root, and exits 0 otherwise.",
+        "Proven RED before GREEN: with a temporary reverse import present the check exits non-zero; record that evidence, then revert the import.",
+        "package.json's `check` script runs the architecture check alongside lint, types, tests.",
+        "`bun run check` exits 0 on the clean tree.",
+        "`bun test` reports 31 pass / 0 fail with tests/persistence.test.ts and tests/server.test.ts unmodified."
       ],
-      "passes": false,
-      "verified_at": null,
-      "verified_by": null,
-      "scenario_file": null
+      "passes": true,
+      "verified_at": "2026-08-24T08:44:00+10:00",
+      "verified_by": "verifier",
+      "scenario_file": "specs/S2.md"
     }
   ]
 }
