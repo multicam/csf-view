@@ -5,33 +5,33 @@
 package = "@oxc-project/types"
 ecosystem = "npm"
 reason = "Staleness-only: oxc types package, 7.4d old at scan; no CVE"
-reviewed = "2026-05-25"
-review_expires = "2026-08-26"
+reviewed = "2026-09-21"
+review_expires = "2026-12-20"
 
 [[allowlist]]
 package = "@rolldown/*"
 ecosystem = "npm"
 reason = "Staleness-only: rolldown platform bindings + pluginutils 1.0.x, 5–13d old at scan; no CVE"
-reviewed = "2026-05-25"
-review_expires = "2026-08-26"
+reviewed = "2026-09-21"
+review_expires = "2026-12-20"
 
 [[allowlist]]
 package = "rolldown"
 ecosystem = "npm"
 reason = "Staleness-only: rolldown 1.0.2, 5.5d old at scan; no CVE"
-reviewed = "2026-05-25"
-review_expires = "2026-08-26"
+reviewed = "2026-09-21"
+review_expires = "2026-12-20"
 
 [[allowlist]]
 package = "postcss"
 ecosystem = "npm"
 reason = "Staleness-only: postcss 8.5.15, 6.4d old at scan; no CVE"
-reviewed = "2026-05-25"
-review_expires = "2026-08-26"
+reviewed = "2026-09-21"
+review_expires = "2026-12-20"
 
 [[allowlist]]
 package = "vite"
 ecosystem = "npm"
 reason = "Staleness-only: vite 8.0.14, 4.6d old at scan; no CVE"
-reviewed = "2026-05-25"
-review_expires = "2026-08-26"
+reviewed = "2026-09-21"
+review_expires = "2026-12-20"
